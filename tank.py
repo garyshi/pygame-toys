@@ -4,6 +4,7 @@ import pygame
 from pygame.locals import *
 
 
+SCREEN_SIZE = (1024, 768)
 FRAME_PER_SECOND = 60
 MS_PER_FRAME = 1000.0 / FRAME_PER_SECOND
 
@@ -151,14 +152,13 @@ def populate_aitanks(num_enemies, player, bounds, min_dist):
 
 def main():
     clock = pygame.time.Clock()
-    screen_w = 1024
-    screen_h = 768
-    screen = pygame.display.set_mode((screen_w, screen_h), DOUBLEBUF)
-    player = Tank(bounds=(0, 0, screen_w, screen_h),
-                  pos=(screen_w/2, screen_h/2),
+    screen = pygame.display.set_mode(SCREEN_SIZE, DOUBLEBUF)
+    bounds = (0, 0, SCREEN_SIZE[0], SCREEN_SIZE[1])
+    player = Tank(bounds=bounds,
+                  pos=(SCREEN_SIZE[0]/2, SCREEN_SIZE[1]/2),
                   color=(128, 128, 255),
                   health=3)
-    ai_tanks = populate_aitanks(5, player, (0, 0, screen_w, screen_h), 20)
+    ai_tanks = populate_aitanks(5, player, bounds, 20)
     all_tanks = ai_tanks + [player]
 
     paused = False
