@@ -4,6 +4,10 @@ import pygame
 from pygame.locals import *
 
 
+FRAME_PER_SECOND = 60
+MS_PER_FRAME = 1000.0 / FRAME_PER_SECOND
+
+
 def get_speed_vector(pos, dest, speed):
     # TODO: migrate to pygame.math.Vector2 when it's ready.
     v_x = dest[0] - pos[0]
@@ -16,29 +20,37 @@ def get_speed_vector(pos, dest, speed):
 
 
 class Bullet(object):
-    def __init__(self, pos, init_dest, bounds):
+    def __init__(self, pos, init_dest, bounds, speed=10):
         self.c = 3
         self.bounds = bounds
         (self.x, self.y) = pos
-        self.vector = get_speed_vector(pos, init_dest, 10)
+        self.speed = speed
+        self.vector = get_speed_vector(pos, init_dest, self.speed)
         self.surface = pygame.Surface((2 * self.c, 2 * self.c))
         pygame.draw.circle(self.surface, (255, 255, 255), (self.c, self.c), self.c-1)
 
+    @property
+    def pos(self):
+        return (self.x, self.y)
+
     def draw(self, screen):
-        screen.blit(self.surface, (self.x, self.y))
+        screen.blit(self.surface, self.pos)
 
     def step(self, delta_t, enemies, friends):
-        for i in (0.2, 0.4, 0.6, 0.8, 1):
-            cx = self.x + i * self.vector[0]
-            cy = self.y + i * self.vector[1]
+        """Returns if this bullet still exists after this step."""
+        v_x = self.vector[0] * delta_t / MS_PER_FRAME
+        v_y = self.vector[1] * delta_t / MS_PER_FRAME
+        sv_x = v_x / self.speed
+        sv_y = v_y / self.speed
+        for i in xrange(self.speed):
+            self.x += sv_x
+            self.y += sv_y
             for e in enemies:
                 if e and e.health > 0:
-                    if abs(cx - e.x) < 8 and abs(cy - e.y) < 8:
+                    if abs(e.x + e.c - self.x) < 8 and abs(e.y + e.c - self.y) < 8:
                         e.health -= 1
                         if e.health <= 0: e.die()
                         return False
-        self.x = round(self.x + self.vector[0])
-        self.y = round(self.y + self.vector[1])
         return (self.bounds[0] < self.x < self.bounds[2] and
                 self.bounds[1] < self.y < self.bounds[3])
 
@@ -56,12 +68,16 @@ class Tank(object):
         self.num_bullets = 3
         self.bullets = [None] * self.num_bullets
 
+    @property
+    def pos(self):
+        return (self.x, self.y)
+
     def die(self):
         self.surface.fill((0, 0, 0))
         pygame.draw.circle(self.surface, self.color, (self.c, self.c), self.c-1, 2)
 
     def draw(self, screen):
-        screen.blit(self.surface, (self.x, self.y))
+        screen.blit(self.surface, self.pos)
 
     def draw_bullets(self, screen):
         if self.health > 0:
@@ -84,14 +100,14 @@ class Tank(object):
     def shoot(self, dest):
         for i in xrange(self.num_bullets):
             if not self.bullets[i]:
-                self.bullets[i] = Bullet((self.x, self.y), dest, self.bounds)
+                self.bullets[i] = Bullet(self.pos, dest, self.bounds)
                 break
 
     def step(self, delta_t, enemies, friends):
-        speed_v = get_speed_vector((self.x, self.y), self.dest, self.speed_ratio * delta_t)
+        speed_v = get_speed_vector(self.pos, self.dest, self.speed_ratio * delta_t)
         if speed_v:
-            self.x += round(speed_v[0])
-            self.y += round(speed_v[1])
+            self.x += speed_v[0]
+            self.y += speed_v[1]
         for i, bullet in enumerate(self.bullets):
             if bullet:
                 if not bullet.step(delta_t, enemies, friends):
@@ -109,10 +125,10 @@ class AITank(Tank):
         r = random.random()
         if self.step_counter == 1 or r < 0.1:
             move_range = 80
-            bounds = [max(self.bounds[0], self.x - move_range),
-                      max(self.bounds[1], self.y - move_range),
-                      min(self.bounds[2], self.x + move_range),
-                      min(self.bounds[3], self.y + move_range)]
+            bounds = [max(self.bounds[0], int(self.x) - move_range),
+                      max(self.bounds[1], int(self.y) - move_range),
+                      min(self.bounds[2], int(self.x) + move_range),
+                      min(self.bounds[3], int(self.y) + move_range)]
             self.set_dest((random.randint(bounds[0], bounds[2]),
                            random.randint(bounds[1], bounds[3])))
             if r < 0.005:
@@ -142,7 +158,6 @@ def populate_aitanks(num_enemies, player, bounds, min_dist):
 
 
 def main():
-    FRAME_PER_SECOND = 60
     clock = pygame.time.Clock()
     screen_w = 1024
     screen_h = 768
