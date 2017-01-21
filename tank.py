@@ -60,7 +60,7 @@ class Tank(object):
         self.color = color
         self.health = health
         self.speed_ratio = speed_ratio  # ratio of the delta_t, in milliseconds.
-        self.bounds = bounds
+        self.bounds = (bounds[0], bounds[1], bounds[2]-2*self.c, bounds[3]-2*self.c)
         (self.x, self.y) = pos
         self.dest = pos
         self.surface = pygame.Surface((2 * self.c, 2 * self.c))
@@ -85,16 +85,8 @@ class Tank(object):
                 if bullet: bullet.draw(screen)
 
     def set_dest(self, pos):
-        d_x = pos[0] - self.c
-        d_y = pos[1] - self.c
-        d_x_min = self.bounds[0]
-        d_x_max = self.bounds[2]
-        d_y_min = self.bounds[1]
-        d_y_max = self.bounds[3]
-        if d_x < d_x_min: d_x = d_x_min
-        elif d_x > d_x_max: d_x = d_x_max
-        if d_y < d_y_min: d_y = d_y_min
-        elif d_y > d_y_max: d_y = d_y_max
+        d_x = min(max(pos[0] - self.c, self.bounds[0]), self.bounds[2])
+        d_y = min(max(pos[1] - self.c, self.bounds[1]), self.bounds[3])
         self.dest = (d_x, d_y)
 
     def shoot(self, dest):
