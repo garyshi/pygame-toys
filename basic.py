@@ -1,9 +1,11 @@
 #!/usr/bin/python
 import math
-import pygame
-from pygame.locals import *
+import pygame_sdl2 as pygame
+from pygame_sdl2.locals import *
 
 FRAME_PER_SECOND = 60
+
+pygame.init()
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode((1024, 768), DOUBLEBUF)
 img = pygame.image.load('pack.png')

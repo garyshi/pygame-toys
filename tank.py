@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import math, random
-import pygame
-from pygame.locals import *
+import pygame_sdl2 as pygame
+from pygame_sdl2.locals import *
 
 
 SCREEN_SIZE = (1024, 768)
